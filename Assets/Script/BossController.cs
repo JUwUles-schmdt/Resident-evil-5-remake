@@ -3,10 +3,18 @@ using UnityEngine;
 public class BossController : MonoBehaviour
 {
     public float speed = 2f;
+
     public float dashSpeed = 8f;
     public float dashDuration = 1f;
+
     public float minDashDelay = 2f;
     public float maxDashDelay = 5f;
+
+    public float minChargeTime = 1f;
+    public float maxChargeTime = 2f;
+
+    public float minStunTime = 1f;
+    public float maxStunTime = 2f;
 
     public float hp;
 
@@ -14,51 +22,95 @@ public class BossController : MonoBehaviour
 
     private float dashTimer;
     private float nextDashTime;
+
+    private float chargeTimer;
+    private float stunTimer;
+
+    private bool isCharging;
     private bool isDashing;
+    private bool isStunned;
+
     private Vector2 dashDir;
 
     void Start()
     {
         SetNextDash();
+
         portes[0] = GameObject.Find("Sortie");
         portes[1] = GameObject.Find("Entrée");
     }
 
     void Update()
     {
-        if (hp <= 0) 
+        if (hp <= 0)
         {
             for (int i = 0; i < portes.Length; i++)
             {
-                Destroy(portes[i]);
+                portes[i].SetActive(false);
             }
+
             Destroy(gameObject);
         }
+
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
         if (players.Length == 0) return;
 
         Transform target = players[0].transform;
 
-        if (!isDashing)
-        {transform.position = Vector2.MoveTowards(transform.position,target.position,speed * Time.deltaTime);
+        if (isStunned)
+        {
+            stunTimer -= Time.deltaTime;
 
-            if (Time.time >= nextDashTime)
+            if (stunTimer <= 0f)
             {
-                dashDir = (target.position - transform.position).normalized;
+                isStunned = false;
+                SetNextDash();
+            }
+
+            return;
+        }
+
+        if (isCharging)
+        {
+            chargeTimer -= Time.deltaTime;
+
+            if (chargeTimer <= 0f)
+            {
+                isCharging = false;
+
                 isDashing = true;
                 dashTimer = dashDuration;
             }
+
+            return;
         }
-        else
+
+        if (isDashing)
         {
             transform.position += (Vector3)(dashDir * dashSpeed * Time.deltaTime);
+
             dashTimer -= Time.deltaTime;
 
             if (dashTimer <= 0f)
             {
                 isDashing = false;
-                SetNextDash();
+
+                isStunned = true;
+                stunTimer = Random.Range(minStunTime, maxStunTime);
             }
+
+            return;
+        }
+
+        transform.position = Vector2.MoveTowards(transform.position,target.position,speed * Time.deltaTime);
+
+        if (Time.time >= nextDashTime)
+        {
+            dashDir = (target.position - transform.position).normalized;
+
+            isCharging = true;
+            chargeTimer = Random.Range(minChargeTime, maxChargeTime);
         }
     }
 
@@ -67,15 +119,13 @@ public class BossController : MonoBehaviour
         nextDashTime = Time.time + Random.Range(minDashDelay, maxDashDelay);
     }
 
-
     public void TakeDamage(float damage)
     {
         hp -= damage;
-
     }
 
     public void GetKnockbacked(Transform origin)
     {
-    }
 
+    }
 }

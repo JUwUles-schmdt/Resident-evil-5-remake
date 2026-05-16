@@ -49,7 +49,7 @@ public class PlayerController : MonoBehaviour
 
         
 
-        if (SceneManager.GetActiveScene().name != "02 - Mines") flashLight.SetActive(false);
+        flashLight.SetActive(false);
         gc = FindObjectOfType<GameController>();
         if (gc.playerNumber == 0)
         {
@@ -320,6 +320,11 @@ public class PlayerController : MonoBehaviour
     {
         getWeapons[0] = weapons[0];
         getWeapons[1] = weapons[1];
+    }
+
+    public void toggleLight(bool light)
+    {
+        flashLight.SetActive(light);
     }
 
 
