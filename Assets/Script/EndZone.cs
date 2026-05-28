@@ -6,24 +6,22 @@ public class EndZone : MonoBehaviour
 {
     public CameraController cc;
     public int numberofplayer;
-    public static int level=1;
+    public int nextLevelNumber;
     public Transform nextLevel;
 
     private void Start()
     {
-        level = 1;
     }
 
     void Update()
     {
         if (cc.players.Count > 0 && numberofplayer >= cc.players.Count)
-        {
-            level += 1;   
+        {  
             if (cc.players.Count > 0 && cc.players[0] != null)
             {
                 cc.players[0].transform.position = nextLevel.position;
 
-                if (level == 2)
+                if (nextLevelNumber == 2)
                     cc.players[0].GetComponent<PlayerController>().toggleLight(true);
                 else
                     cc.players[0].GetComponent<PlayerController>().toggleLight(false);
@@ -33,7 +31,7 @@ public class EndZone : MonoBehaviour
             {
                 cc.players[1].transform.position = nextLevel.position;
 
-                if (level == 2)
+                if (nextLevelNumber == 2)
                     cc.players[1].GetComponent<PlayerController>().toggleLight(true);
                 else
                     cc.players[1].GetComponent<PlayerController>().toggleLight(false);

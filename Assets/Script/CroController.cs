@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using Unity.Mathematics;
 
-public class EnemyController : MonoBehaviour
+public class CroController : MonoBehaviour
 {
     enum CurrentState { Chasing, Wandering, Dead }
 
@@ -16,15 +16,15 @@ public class EnemyController : MonoBehaviour
     public float chasingSpeed;
     public float maxDistance;
 
-    public GameObject[] drops;
 
     bool isKnocked;
     bool isWanderingRoutine;
     public bool isDying;
 
-    private float timingSinceLast;
-
     Transform player;
+
+    public GameObject hidden;
+    public GameObject notHidden;
 
     private void Start()
     {
@@ -33,6 +33,9 @@ public class EnemyController : MonoBehaviour
 
     private void Update()
     {
+        SpriteRenderer currentSprite;
+        if (hidden.activeSelf)  currentSprite = hidden.GetComponent<SpriteRenderer>();
+        else if (notHidden.activeSelf)currentSprite = notHidden.GetComponent<SpriteRenderer>();
         if (isDying) return;
         if (Hp <= 0)
         {
@@ -44,8 +47,10 @@ public class EnemyController : MonoBehaviour
                 StartCoroutine(die());
             }
             return;
+            hidden.SetActive(true);
+            notHidden.SetActive(false);
         }
-        
+
 
         player = GetClosestPlayer();
 
@@ -61,8 +66,8 @@ public class EnemyController : MonoBehaviour
         {
             rb.MovePosition(Vector2.MoveTowards(rb.position, target, speed * Time.deltaTime));
 
-            if ((!isWanderingRoutine &&
-                Vector2.Distance(transform.position, target) < 0.2f)||(timingSinceLast >7))
+            if (!isWanderingRoutine &&
+                Vector2.Distance(transform.position, target) < 0.2f)
             {
                 StartCoroutine(newTarget());
             }
@@ -72,15 +77,25 @@ public class EnemyController : MonoBehaviour
             rb.MovePosition(Vector2.MoveTowards(rb.position, target, chasingSpeed * Time.deltaTime));
         }
 
-        timingSinceLast += Time.deltaTime;
 
+        if (state == CurrentState.Chasing && Vector2.Distance(transform.position, target) < 1f)
+        {
 
+            hidden.SetActive(false);
+            notHidden.SetActive(true);
+        }
+        else
+        {
+            
+            hidden.SetActive(true);
+            notHidden.SetActive(false);
+        }
     }
 
     public void TakeDamage(float damage)
     {
         Hp -= damage;
-        if (state != CurrentState.Chasing) 
+        if (state != CurrentState.Chasing)
         {
 
             player = GetClosestPlayer();
@@ -123,15 +138,9 @@ public class EnemyController : MonoBehaviour
 
     IEnumerator die()
     {
-        int rdm = UnityEngine.Random.Range(1, 10);
-        if (rdm > 6)
-        {
-            int loot = UnityEngine.Random.Range(0, drops.Length);
-            Instantiate(drops[loot], transform.position, Quaternion.identity);
-        }
 
 
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        SpriteRenderer sr = notHidden.GetComponent<SpriteRenderer>();
         CircleCollider2D CircleCollider2D = GetComponent<CircleCollider2D>();
         CircleCollider2D.isTrigger = true;
 
@@ -153,7 +162,6 @@ public class EnemyController : MonoBehaviour
                  new Vector2(UnityEngine.Random.Range(-3f, 3f), UnityEngine.Random.Range(-3f, 3f));
 
         state = CurrentState.Wandering;
-        timingSinceLast = 0f;
     }
 
     Transform GetClosestPlayer()
@@ -181,5 +189,5 @@ public class EnemyController : MonoBehaviour
 
 
 
-    
+
 }

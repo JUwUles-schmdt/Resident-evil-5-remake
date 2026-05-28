@@ -22,16 +22,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField]private Weapons[] getWeapons;
     [SerializeField]private Weapons[] weapons;
     private Weapons currentWeapon;
-    [SerializeField]private GameObject laser;
     private float switchCd=0.3f;
     private float currentCd;
 
-    [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private Transform firePoint;
     [SerializeField] private Transform attackPoint;
-    public GameObject bloodPrefab;
     [SerializeField] private float knifeCd=1f;
     public GameController gc;
+
+    [Header ("Prefabs")]
+    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField]private GameObject laser;
+    public GameObject bloodPrefab;
+    public GameObject flashLight;
 
 
     private bool isReloading=false;
@@ -41,7 +44,6 @@ public class PlayerController : MonoBehaviour
     public PlayerInput playerInput;
 
 
-    public GameObject flashLight;
 
 
     private void Start()
@@ -61,6 +63,7 @@ public class PlayerController : MonoBehaviour
         {
             gc.cc.AddPlayer(transform);
             transform.position = gc.cc.players[0].position;
+            flashLight.SetActive(gc.cc.players[0].gameObject.GetComponent<PlayerController>().flashLight.activeSelf);
         }
         vitesse = speed;
         laser.SetActive(false);
@@ -72,6 +75,7 @@ public class PlayerController : MonoBehaviour
             weapons[i] = getWeapons[i].Clone();
         }
         currentWeapon = weapons[0];
+
 
     }
     public void OnMove(InputAction.CallbackContext context)
@@ -94,12 +98,30 @@ public class PlayerController : MonoBehaviour
             aim = false;
     }
 
+
+
+    private void FixedUpdate()
+    {
+        Vector2 dir = move.normalized * vitesse * ms * sprint;
+
+        Vector2 nextPos = rb.position + dir * Time.fixedDeltaTime;
+
+        Vector3 vp = Camera.main.WorldToViewportPoint(nextPos);
+
+        if (vp.x > 0.05f && vp.x < 0.95f &&
+            vp.y > 0.05f && vp.y < 0.95f)
+        {
+            rb.linearVelocity = dir;
+        }
+        else
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
+    }
+
+
     void Update()
     {
-
-
-
-
         ammoUi.SetText(currentWeapon.mag+"/"+currentWeapon.reserve);
         float angleRad = rb.rotation * Mathf.Deg2Rad;
         Vector2 test = new Vector2(Mathf.Cos(angleRad), Mathf.Sin(angleRad));
@@ -116,21 +138,7 @@ public class PlayerController : MonoBehaviour
             ms = 1;
         }
 
-        Vector2 dir = move.normalized * vitesse * ms * sprint;
-
-        Vector2 nextPos = rb.position + dir * Time.deltaTime;
-
-        Vector3 vp = Camera.main.WorldToViewportPoint(nextPos);
-
-        if (vp.x > 0.05f && vp.x < 0.95f &&
-            vp.y > 0.05f && vp.y < 0.95f)
-        {
-            rb.linearVelocity = dir;
-        }
-        else
-        {
-            rb.linearVelocity = Vector2.zero;
-        }
+        
         
         
         
@@ -327,5 +335,12 @@ public class PlayerController : MonoBehaviour
         flashLight.SetActive(light);
     }
 
+
+
+
+    public void OnPause()
+    {
+        FindAnyObjectByType<GameController>().pause();
+    }
 
 }

@@ -38,6 +38,14 @@ public class BulletManager : MonoBehaviour
             enemy.TakeDamage(damage);
             Destroy(gameObject);
         }
+        if (collision.CompareTag("Enemy2"))
+        {
+            CroController enemy = collision.GetComponent<CroController>();
+            if (enemy.isDying) return;
+            Instantiate(bloodPrefab, transform.position, Quaternion.identity);
+            enemy.TakeDamage(damage);
+            Destroy(gameObject);
+        }
         else if (collision.CompareTag("Wall"))
         {
             if (rend.isVisible)
