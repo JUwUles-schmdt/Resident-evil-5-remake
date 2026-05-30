@@ -26,7 +26,7 @@ public class CameraController : MonoBehaviour
         cam = GetComponent<Camera>();
     }
 
-    void LateUpdate()
+    void FixedUpdate()
     {
         if (players.Count == 0) return;
 

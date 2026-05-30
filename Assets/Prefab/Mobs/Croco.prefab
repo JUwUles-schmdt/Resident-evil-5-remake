@@ -188,7 +188,7 @@ GameObject:
   - component: {fileID: 1154773688067384745}
   m_Layer: 0
   m_Name: Croco
-  m_TagString: Enemy
+  m_TagString: Enemy2
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -285,13 +285,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 108413710df2a6d47ba3d7f258936c42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Hp: 0
+  Hp: 150
   rb: {fileID: 1586440915827918313}
   target: {x: 0, y: 0}
-  speed: 0
-  chasingSpeed: 0
-  maxDistance: 0
-  drops: []
+  speed: 3
+  chasingSpeed: 4
+  maxDistance: 7
   isDying: 0
   hidden: {fileID: 4265916988550506916}
   notHidden: {fileID: 1438471572241939997}

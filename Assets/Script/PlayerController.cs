@@ -8,11 +8,14 @@ using static UnityEngine.Rendering.DebugUI.Table;
 
 public class PlayerController : MonoBehaviour
 {
+    
     [SerializeField]private float speed;
     private float vitesse;
     private float ms = 1;
     private float sprint = 1;
-
+    public int pv;
+    private bool isKnocked;
+    private bool isDying;
 
     private Vector2 move;
     private Vector2 look;
@@ -44,15 +47,20 @@ public class PlayerController : MonoBehaviour
     public PlayerInput playerInput;
 
 
+    public GameObject[] coeurs;
+
+
+    public float deathTimer;
+    private float _deathTimer;
 
 
     private void Start()
     {
 
-        
+        _deathTimer = deathTimer;
 
         flashLight.SetActive(false);
-        gc = FindObjectOfType<GameController>();
+        gc = GameObject.Find("GameController").GetComponent<GameController>();
         if (gc.playerNumber == 0)
         {
             gc.playerNumber += 1;
@@ -102,6 +110,7 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (isKnocked) return;
         Vector2 dir = move.normalized * vitesse * ms * sprint;
 
         Vector2 nextPos = rb.position + dir * Time.fixedDeltaTime;
@@ -159,6 +168,56 @@ public class PlayerController : MonoBehaviour
         switchCd -= Time.deltaTime;
         currentCd -=Time.deltaTime;
         knifeCd -= Time.deltaTime;
+
+
+
+
+        switch (pv)
+        {
+            case 3:
+                coeurs[0].SetActive(true);
+                coeurs[1].SetActive(true);
+                coeurs[2].SetActive(true);
+                break;
+            case 2:
+                coeurs[0].SetActive(true);
+                coeurs[1].SetActive(true);
+                coeurs[2].SetActive(false);
+                break;
+            case 1:
+                coeurs[0].SetActive(true);
+                coeurs[1].SetActive(false);
+                coeurs[2].SetActive(false);
+                break;
+            case 0:
+                coeurs[0].SetActive(false);
+                coeurs[1].SetActive(false);
+                coeurs[2].SetActive(false);
+                isDying = true;
+                break;
+        }
+
+        if (isDying)
+        {
+            _deathTimer -= Time.deltaTime;
+            if (FindObjectOfType<CameraController>().players.Count > 1)
+            {
+                sprint = 0f;
+                if (FindObjectOfType<CameraController>().players[0].GetComponent<PlayerController>().isDying && FindObjectOfType<CameraController>().players[1].GetComponent<PlayerController>().isDying)
+                {
+                    FindAnyObjectByType<GameController>().endGame();
+                }
+                if (_deathTimer <= 0)
+                {
+                    FindAnyObjectByType<GameController>().endGame();
+                }
+            }
+            else
+            {
+                FindAnyObjectByType<GameController>().endGame();
+            }
+        }
+        else _deathTimer = deathTimer;
     }
 
     private void HandleAim()
@@ -176,7 +235,7 @@ public class PlayerController : MonoBehaviour
     }
     public void OnSprint(InputAction.CallbackContext context)
     {
-        if (context.started&&!aim&&!marcheArriere&& !isReloading)
+        if (context.started&&!aim&&!marcheArriere&& !isReloading&&!isDying)
             sprint = 2;
 
         if (context.canceled)
@@ -226,6 +285,13 @@ public class PlayerController : MonoBehaviour
                         hit.GetComponent<EnemyController>()?.TakeDamage(20);
                         Instantiate(bloodPrefab, hit.transform.position, Quaternion.identity);
                         hit.GetComponent<EnemyController>()?.GetKnockbacked(attackPoint);
+
+                    }
+                    if (hit.CompareTag("Enemy2"))
+                    {
+                        hit.GetComponent<CroController>()?.TakeDamage(20);
+                        Instantiate(bloodPrefab, hit.transform.position, Quaternion.identity);
+                        hit.GetComponent<CroController>()?.GetKnockbacked(attackPoint);
 
                     }
                 }
@@ -322,6 +388,11 @@ public class PlayerController : MonoBehaviour
             }
             Destroy(collision.gameObject);
         }
+        else if (collision.CompareTag("Heal"))
+        {
+            heal(1);
+            Destroy(collision.gameObject);
+        }
     }
 
     public void stock()
@@ -342,5 +413,37 @@ public class PlayerController : MonoBehaviour
     {
         FindAnyObjectByType<GameController>().pause();
     }
+
+
+    public void TakeDamage(int damage)
+    {
+        pv -= damage;
+    }
+
+    public void GetKnockbacked(Transform origin)
+    {
+        if (isKnocked) return;
+        StartCoroutine(KnockbackRoutine(origin));
+    }
+
+    IEnumerator KnockbackRoutine(Transform origin)
+    {
+        isKnocked = true;
+
+        Vector2 dir = (transform.position - origin.position).normalized;
+        rb.linearVelocity = dir * 10f;
+
+        yield return new WaitForSeconds(0.2f);
+
+        rb.linearVelocity = Vector2.zero;
+        isKnocked = false;
+    }
+
+    public void heal(int heal)
+    {
+        pv += heal;
+        if (pv > 3) pv = 3;
+    }
+
 
 }

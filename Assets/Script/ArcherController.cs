@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using Unity.Mathematics;
 
-public class CroController : MonoBehaviour
+public class ArcherController : MonoBehaviour
 {
     enum CurrentState { Chasing, Wandering, Dead }
 
@@ -16,28 +16,27 @@ public class CroController : MonoBehaviour
     public float chasingSpeed;
     public float maxDistance;
 
+    public GameObject[] drops;
 
     bool isKnocked;
     bool isWanderingRoutine;
     public bool isDying;
 
+    private float timingSinceLast;
+
     Transform player;
 
-    public GameObject hidden;
-    public GameObject notHidden;
+
+    public GameObject arrow;
+    public Transform LADOUPARLABALLE;
 
     private void Start()
     {
         setNewDestination();
-        hidden.SetActive(true);
-        notHidden.SetActive(false);
     }
 
     private void Update()
     {
-        SpriteRenderer currentSprite;
-        if (hidden.activeSelf)  currentSprite = hidden.GetComponent<SpriteRenderer>();
-        else if (notHidden.activeSelf)currentSprite = notHidden.GetComponent<SpriteRenderer>();
         if (isDying) return;
         if (Hp <= 0)
         {
@@ -49,8 +48,6 @@ public class CroController : MonoBehaviour
                 StartCoroutine(die());
             }
             return;
-            hidden.SetActive(true);
-            notHidden.SetActive(false);
         }
 
 
@@ -68,23 +65,23 @@ public class CroController : MonoBehaviour
         {
             rb.MovePosition(Vector2.MoveTowards(rb.position, target, speed * Time.deltaTime));
 
-            if (!isWanderingRoutine &&
-                Vector2.Distance(transform.position, target) < 0.2f)
+            if ((!isWanderingRoutine &&
+                Vector2.Distance(transform.position, target) < 0.2f) || (timingSinceLast > 7))
             {
                 StartCoroutine(newTarget());
             }
         }
         else if (state == CurrentState.Chasing)
         {
-            rb.MovePosition(Vector2.MoveTowards(rb.position, target, chasingSpeed * Time.deltaTime));
+            if (Vector2.Distance(transform.position, target) > 3&& Vector2.Distance(transform.position, target) < 7)
+            {
+
+            }
         }
 
-        if (state == CurrentState.Chasing && Vector2.Distance(transform.position, target) < 4f)
-        {
-            hidden.SetActive(false);
-            notHidden.SetActive(true);
-        }
-        
+        timingSinceLast += Time.deltaTime;
+
+
     }
 
     public void TakeDamage(float damage)
@@ -104,7 +101,6 @@ public class CroController : MonoBehaviour
     public void GetKnockbacked(Transform origin)
     {
         if (isKnocked) return;
-
         StartCoroutine(KnockbackRoutine(origin));
     }
 
@@ -113,7 +109,7 @@ public class CroController : MonoBehaviour
         isKnocked = true;
 
         Vector2 dir = (transform.position - origin.position).normalized;
-        rb.linearVelocity = dir * 2f;
+        rb.linearVelocity = dir * 5f;
 
         yield return new WaitForSeconds(0.2f);
 
@@ -134,9 +130,15 @@ public class CroController : MonoBehaviour
 
     IEnumerator die()
     {
+        int rdm = UnityEngine.Random.Range(1, 10);
+        if (rdm > 6)
+        {
+            int loot = UnityEngine.Random.Range(0, drops.Length);
+            Instantiate(drops[loot], transform.position, Quaternion.identity);
+        }
 
 
-        SpriteRenderer sr = notHidden.GetComponent<SpriteRenderer>();
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
         CircleCollider2D CircleCollider2D = GetComponent<CircleCollider2D>();
         CircleCollider2D.isTrigger = true;
 
@@ -158,6 +160,7 @@ public class CroController : MonoBehaviour
                  new Vector2(UnityEngine.Random.Range(-3f, 3f), UnityEngine.Random.Range(-3f, 3f));
 
         state = CurrentState.Wandering;
+        timingSinceLast = 0f;
     }
 
     Transform GetClosestPlayer()
@@ -183,7 +186,12 @@ public class CroController : MonoBehaviour
         return closest;
     }
 
-
+    private void shoot()
+    {
+        float angle = UnityEngine.Random.Range(-15, 15);
+        Quaternion rot = Quaternion.Euler(0, 0, angle);
+        GameObject bullet = Instantiate(arrow, LADOUPARLABALLE.position, LADOUPARLABALLE.rotation * rot);
+    }
 
 
 }

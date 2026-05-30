@@ -25,10 +25,12 @@ public class EnemyController : MonoBehaviour
     private float timingSinceLast;
 
     Transform player;
+    private float cd;
 
     private void Start()
     {
         setNewDestination();
+        cd = 1;
     }
 
     private void Update()
@@ -45,7 +47,7 @@ public class EnemyController : MonoBehaviour
             }
             return;
         }
-        
+        cd-= Time.deltaTime;
 
         player = GetClosestPlayer();
 
@@ -70,10 +72,15 @@ public class EnemyController : MonoBehaviour
         else if (state == CurrentState.Chasing)
         {
             rb.MovePosition(Vector2.MoveTowards(rb.position, target, chasingSpeed * Time.deltaTime));
+            if (Vector2.Distance(transform.position, player.position) <1f&&cd<=0)
+            {
+                player.GetComponent<PlayerController>().TakeDamage(1);
+                player.GetComponent<PlayerController>().GetKnockbacked(this.transform);
+                cd = 1;
+            }
         }
 
         timingSinceLast += Time.deltaTime;
-
 
     }
 
